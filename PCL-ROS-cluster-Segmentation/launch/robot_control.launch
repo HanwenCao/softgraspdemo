@@ -1,0 +1,10 @@
+<launch>
+  <!--Load the joint controllers to param server-->
+  <rosparam file="$(find obj_recognition)/config/controllers.yaml" command="load"/>
+
+  <!--Load controllers-->
+  <node name="spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" ns="/obj_recognition" args="joint_state_controller
+    pan_position_controller
+    tilt_position_controller"/>
+</launch>
