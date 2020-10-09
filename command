@@ -1,4 +1,16 @@
-# camera
+mkdir -p catkin_ws/src
+cd catkin_ws/src/
+git clone https://github.com/HanwenCao/softgraspdemo.git
+git clone https://github.com/eric-wieser/ros_numpy.git
+cd .. (now should be in catkin_ws/)
+catkin build
+source ./devel/setup.bash
+cd ./src/yolov5_test/scripts/
+rosrun yolov5_test detect_sub.py
+
+
+******************YOLOv5**********************
+# bringup camera
 roslaunch realsense2_camera rs_camera.launch align_depth:=true
 
 # yolo
@@ -11,7 +23,7 @@ rosrun yolov5_test detect_sub.py
 
 
 ******************point cloud**************
-
+# bringup camera
 roslaunch realsense2_camera rs_camera.launch filters:=pointcloud
 rostopic info /camera/depth/color/points
 
