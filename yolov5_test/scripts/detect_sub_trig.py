@@ -27,7 +27,8 @@ from utils.general import (
     xyxy2xywh, plot_one_box, strip_optimizer, set_logging)
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
-from comp_diff.color_hash import compare_images
+from comp_diff.color_hash import compare_hash
+from comp_diff.ssim import compare_ssim
 
 
 def detect(save_img=False):
@@ -316,20 +317,22 @@ if __name__ == '__main__':
             # First load 2 background images.
             bg1 = PILImage.open('./comp_diff/images2/0.jpg')
             bg2 = PILImage.open('./comp_diff/images2/00.jpg')
-            hash_c_thresh,hash_a_thresh = compare_images(bg1,bg2)
+            hash_c_thresh,hash_a_thresh = compare_hash(bg1,bg2)
+
             # Then get the current image.
             while True:
                 #img_arr = realsense.get_image(show=False)
                 #im_pil = PILImage.fromarray(img_arr, 'RGB')
                 im_pil = PILImage.open('./comp_diff/images2/1.jpg')
-                #im_pil.show()
-                # Now measure the similarity between background and current scene.
-                hash_c,hash_a = compare_images(bg1,im_pil)
-                print('HSV hashing=',hash_c)
 
-                if hash_c > hash_c_thresh+1: # May need tuning here.
+                # Now measure the similarity between background and current scene.
+                hash_c,hash_a = compare_hash(bg1,im_pil)
+                ssim = compare_ssim(np.array(bg1.convert("L")), np.array(im_pil.convert("L")))
+                print('HSV hashing=',hash_c,' ssim=',ssim)
+
+                if hash_c > hash_c_thresh+1 or ssim > 0.45: # May need tuning here.
                     print('Scene changing. Do YOLO.')
-                    break  
+                    break
                     
             # Engough difference from background image, do YOLO
             yolo_results = detect()

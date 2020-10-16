@@ -35,7 +35,7 @@ def colorhash(imageA, imageB):
 	hashB = imagehash.colorhash(imageB)
 	return hashA - hashB
 
-def compare_images(imageA, imageB, title=''):
+def compare_hash(imageA, imageB, title=''):
 
 	t0 = time.time()
 	hash_a = ahash(imageA, imageB)
@@ -61,7 +61,7 @@ if __name__ == '__main__':
 	image2 = PILImage.open('./images/2.jpg').resize((480,640))
 
 	# compare the images
-	compare_images(image0, image1, "image0 vs. image1")
+	compare_hash(image0, image1, "image0 vs. image1")
 
 
 
