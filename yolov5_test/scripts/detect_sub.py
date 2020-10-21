@@ -141,7 +141,7 @@ def detect(save_img=False):
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
                     # average depth
-                    x1,y1,x2,y2 = xyxy[0].numpy(),xyxy[1].numpy(),xyxy[2].numpy(),xyxy[3].numpy()
+                    x1,y1,x2,y2 = xyxy[0].cpu().numpy(),xyxy[1].cpu().numpy(),xyxy[2].cpu().numpy(),xyxy[3].cpu().numpy()
                     print('x1,y1,x2,y2 = ',x1,y1,x2,y2)
                     xc,yc = (x1+x2)/2, (y1+y2)/2
                     x1c, x2c, y1c, y2c = (x1+xc)/2,(x2+xc)/2,(y1+yc)/2,(y2+yc)/2
@@ -233,7 +233,7 @@ def detect(save_img=False):
                     # Write results
                     for *xyxy, conf, cls in reversed(det):
                         # average depth
-                        x1,y1,x2,y2 = xyxy[0].numpy(),xyxy[1].numpy(),xyxy[2].numpy(),xyxy[3].numpy()
+                        x1,y1,x2,y2 = xyxy[0].cpu().numpy(),xyxy[1].cpu().numpy(),xyxy[2].cpu().numpy(),xyxy[3].cpu().numpy()
                         print('x1,y1,x2,y2 = ',x1,y1,x2,y2)
                         xc,yc = (x1+x2)/2, (y1+y2)/2
                         x1c, x2c, y1c, y2c = (x1+xc)/2,(x2+xc)/2,(y1+yc)/2,(y2+yc)/2
