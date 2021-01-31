@@ -1,7 +1,13 @@
 #! /usr/bin/python3.8
 import realsense_subscriber as realsense
+import socket
+import pickle
 import argparse
+import os
+import platform
+import shutil
 import time
+from PIL import Image as PILImage
 import numpy as np
 
 import sys
@@ -9,6 +15,7 @@ sys.path.remove('/opt/ros/melodic/lib/python2.7/dist-packages') # in order to im
 import cv2
 sys.path.append('/opt/ros/melodic/lib/python2.7/dist-packages')
 
+from pathlib import Path
 import torch
 import torch.backends.cudnn as cudnn
 from numpy import random
@@ -26,7 +33,11 @@ def detect(opt,img_arr,depth_arr):
     out, source, weights, view_img, save_txt, imgsz = \
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
 
-    img_shape = depth_arr.shape  
+    # image input
+    view_img=True
+    
+    img_shape = depth_arr.shape
+    
     x1,y1,x2,y2,depth_avg = 0,0,0,0,0
     xyz_obj = np.array([0,0,0])
     K = np.array([[609.674560546875, 0.0, 323.9862365722656], [0.0, 608.5648193359375, 227.5126495361328], [0.0, 0.0, 1.0]])  # intrinsic 
@@ -41,9 +52,9 @@ def detect(opt,img_arr,depth_arr):
     # Initialize
     set_logging()
     device = select_device(opt.device)
-    #if os.path.exists(out):
-        #shutil.rmtree(out)  # delete output folder
-    #os.makedirs(out)  # make new output folder
+    if os.path.exists(out):
+        shutil.rmtree(out)  # delete output folder
+    os.makedirs(out)  # make new output folder
     half = device.type != 'cpu'  # half precision only supported on CUDA
 
 
@@ -93,11 +104,11 @@ def detect(opt,img_arr,depth_arr):
         if det is not None and len(det):
             # Rescale boxes from img_size to im0 size
             det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
-            
-            #for c in det[:, -1].unique():
-                #n = (det[:, -1] == c).sum()  # detections per class
-                #s += '%g %ss, ' % (n, names[int(c)])  # add to string
-            
+            # Print results
+            for c in det[:, -1].unique():
+                n = (det[:, -1] == c).sum()  # detections per class
+                s += '%g %ss, ' % (n, names[int(c)])  # add to string
+            # Write results
             for *xyxy, conf, cls in reversed(det):
                 # average depth
                 x1,y1,x2,y2 = xyxy[0].cpu().numpy(),xyxy[1].cpu().numpy(),xyxy[2].cpu().numpy(),xyxy[3].cpu().numpy()
@@ -133,8 +144,7 @@ def detect(opt,img_arr,depth_arr):
                 im0 = np.array(im0) # this fix the error https://github.com/opencv/opencv/issues/18120
                 plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)  # error
 
-        # Visualization
-        view_img=True
+        # Stream results
         if view_img:
             cv2.imshow(p, im0)
             if cv2.waitKey(1) == ord('q'):  # q to quit
@@ -171,7 +181,7 @@ def yolov5():
     while True:
         time.sleep(0.1)
         with torch.no_grad():
-            img_arr, depth_arr = realsense.get_image(show=False) #input: array RGB, array Depth
+            img_arr, depth_arr = realsense.get_image(show=False) #array RGB
             yolo_results = detect(opt, img_arr, depth_arr)
             print('yolo_results =', yolo_results) 
     return yolo_results

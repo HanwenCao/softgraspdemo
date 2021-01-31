@@ -1,0 +1,3 @@
+python train_ggcnn.py --description training_example2 --network ggcnn2 --dataset cornell --dataset-path ./mydataset640filters/ --batches-per-epoch 500 --use-rgb 0
+
+python eval_ggcnn.py --network ./output/models/new640filters/210106_1522_training_example2/epoch_01_iou_0.90 --n-grasps 1 --dataset cornell --dataset-path ./mydataset640filterstest/ --iou-eval --vis --split 0 --use-rgb 0

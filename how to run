@@ -1,0 +1,95 @@
+roslaunch realsense2_camera rs_camera.launch align_depth:=true
+roslaunch realsense2_camera rs_camera.launch align_depth:=true filters:=disparity,spatial,temporal
+
+
+source ~/eye2hand-pnp-ur/vision_ws/devel/setup.bash
+cd ~/eye2hand-pnp-ur/vision_ws/src/softgraspdemo/yolov5_test/scripts/
+rosrun yolov5_test hw-detect_sub.py
+only snap depth(tiff) : 
+rosrun yolov5_test snap_depth_300.py
+rosrun yolov5_test snap_depth_640.py
+
+
+source ~/eye2hand-pnp-ur/mp_ws/devel/setup.bash
+roslaunch ur_robot_driver ur5_bringup.launch robot_ip:=192.168.1.50 kinematics_config:=${HOME}/eye2hand-pnp-ur/mp_ws/src/ur5_calibration.yaml limited:=true
+
+
+source ~/eye2hand-pnp-ur/mp_ws/devel/setup.bash
+roslaunch ur5_moveit_config ur5_moveit_planning_execution.launch limited:=true
+
+
+cd ~/eye2hand-pnp-ur/jude-pnp/
+#python2 vision-moveit.py
+#python2 buggy-vision-moveit.py
+python2 demov3.py
+
+
+
+
+
+***********calibration (not working)********************
+source devel/setup.bash 
+roslaunch easy_handeye camera.launch 
+
+source devel/setup.bash 
+roslaunch easy_handeye aruco.launch 
+
+source devel/setup.bash 
+roslaunch easy_handeye robot_bringup.launch 
+
+source devel/setup.bash 
+roslaunch easy_handeye moveit.launch 
+
+source devel/setup.bash 
+roslaunch easy_handeye handeye.launch
+
+***********easy handeye********************
+image topic:
+/camera/color/image_raw
+/camera/color/camera_info
+
+frames:
+camera_color_optical_frame
+base_link
+wrist_3_link
+
+***
+translation: 
+  x: 0.625036891272
+  y: 0.120746005263
+  z: 1.19195077828
+rotation: 
+  x: 0.915653289232
+  y: -0.40158587408
+  z: 0.00753659951705
+  w: 0.0158442205739
+
+***********demov3.py********************
+base_link
+DEPTH_TOPIC = "/camera/aligned_depth_to_color/image_raw" 
+IMAGE_TOPIC = "/camera/color/image_raw"
+
+
+    def position_from_camera_to_robot(self, x, y, z):
+        R0 = numpy.array([[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
+        #R1 = self.RPY2Mat(numpy.array([1, 10, -50]) * pi / 180.0)
+        #R1 = self.RPY2Mat(numpy.array([6, 18, -50]) * pi / 180.0)        #robot to the rightmost
+        #R1 = self.RPY2Mat(numpy.array([-2, 5, -53]) * pi / 180.0)        #brute force 0
+        #R1 = self.RPY2Mat(numpy.array([-2, 7, -48]) * pi / 180.0)        #brute force 1
+        R1 = self.RPY2Mat(numpy.array([-4, 8, -45]) * pi / 180.0)         #brute force 2
+        cRb = numpy.dot(R1, R0)       
+        #cPb = numpy.array([-0.3775, 0.554, 1.016])
+        #cPb = numpy.array([-0.3475, 0.604, 1.016])                       #robot on left 7cm of rightmost posn
+        #cPb = numpy.array([-0.3775+0.09, 0.554-0.04, 1.016+0.427])       #bf1
+        #cPb = numpy.array([-0.3775+0.065, 0.554-0.06, 1.016+0.397])      #bf2@center
+        cPb = numpy.array([-0.3775+0.055, 0.554-0.06, 1.016+0.357])       #bf2@xc=210
+        cTb = numpy.eye(4)
+        cTb[0:3, 0:3] = cRb
+        cTb[0:3, 3] = cPb
+        bTc = numpy.linalg.pinv(cTb)
+        print('bTc', bTc)
+        cPo = numpy.array([x, y, z, 1])
+        bPo = numpy.dot(bTc, cPo)        
+        return [-bPo[0], -bPo[1], bPo[2]]  # x_pick,y_pick,z_pick
+
+

@@ -1,0 +1,102 @@
+----------------------------------------------------------------
+        Layer (type)               Output Shape         Param #
+================================================================
+            Conv2d-1         [-1, 16, 300, 300]           7,760
+              ReLU-2         [-1, 16, 300, 300]               0
+            Conv2d-3         [-1, 16, 300, 300]           6,416
+              ReLU-4         [-1, 16, 300, 300]               0
+         MaxPool2d-5         [-1, 16, 150, 150]               0
+            Conv2d-6         [-1, 16, 150, 150]           6,416
+              ReLU-7         [-1, 16, 150, 150]               0
+            Conv2d-8         [-1, 16, 150, 150]           6,416
+              ReLU-9         [-1, 16, 150, 150]               0
+        MaxPool2d-10           [-1, 16, 75, 75]               0
+           Conv2d-11           [-1, 32, 75, 75]          12,832
+             ReLU-12           [-1, 32, 75, 75]               0
+           Conv2d-13           [-1, 32, 75, 75]          25,632
+             ReLU-14           [-1, 32, 75, 75]               0
+UpsamplingBilinear2d-15         [-1, 32, 150, 150]               0
+           Conv2d-16         [-1, 16, 150, 150]           4,624
+             ReLU-17         [-1, 16, 150, 150]               0
+UpsamplingBilinear2d-18         [-1, 16, 300, 300]               0
+           Conv2d-19         [-1, 16, 300, 300]           2,320
+             ReLU-20         [-1, 16, 300, 300]               0
+           Conv2d-21          [-1, 1, 300, 300]              17
+           Conv2d-22          [-1, 1, 300, 300]              17
+           Conv2d-23          [-1, 1, 300, 300]              17
+           Conv2d-24          [-1, 1, 300, 300]              17
+================================================================
+Total params: 72,484
+Trainable params: 72,484
+Non-trainable params: 0
+----------------------------------------------------------------
+Input size (MB): 1.37
+Forward/backward pass size (MB): 110.55
+Params size (MB): 0.28
+Estimated Total Size (MB): 112.20
+----------------------------------------------------------------
+INFO:root:Beginning Epoch 00
+INFO:root:Epoch: 0, Batch: 100, Loss: 0.0744
+INFO:root:Epoch: 0, Batch: 200, Loss: 0.0578
+INFO:root:Epoch: 0, Batch: 300, Loss: 0.0386
+INFO:root:Epoch: 0, Batch: 400, Loss: 0.0417
+INFO:root:Epoch: 0, Batch: 500, Loss: 0.0291
+INFO:root:Epoch: 0, Batch: 600, Loss: 0.0295
+INFO:root:Epoch: 0, Batch: 700, Loss: 0.0252
+INFO:root:Validating...
+INFO:root:184/249 = 0.738956
+INFO:root:Beginning Epoch 01
+INFO:root:Epoch: 1, Batch: 100, Loss: 0.0224
+INFO:root:Epoch: 1, Batch: 200, Loss: 0.0186
+INFO:root:Epoch: 1, Batch: 300, Loss: 0.0239
+INFO:root:Epoch: 1, Batch: 400, Loss: 0.0231
+INFO:root:Epoch: 1, Batch: 500, Loss: 0.0174
+INFO:root:Epoch: 1, Batch: 600, Loss: 0.0143
+INFO:root:Epoch: 1, Batch: 700, Loss: 0.0163
+INFO:root:Validating...
+INFO:root:206/249 = 0.827309
+INFO:root:Beginning Epoch 02
+INFO:root:Epoch: 2, Batch: 100, Loss: 0.0176
+INFO:root:Epoch: 2, Batch: 200, Loss: 0.0139
+INFO:root:Epoch: 2, Batch: 300, Loss: 0.0166
+INFO:root:Epoch: 2, Batch: 400, Loss: 0.0141
+INFO:root:Epoch: 2, Batch: 500, Loss: 0.0165
+INFO:root:Epoch: 2, Batch: 600, Loss: 0.0155
+INFO:root:Epoch: 2, Batch: 700, Loss: 0.0152
+INFO:root:Validating...
+INFO:root:231/249 = 0.927711
+INFO:root:Beginning Epoch 03
+INFO:root:Epoch: 3, Batch: 100, Loss: 0.0119
+INFO:root:Epoch: 3, Batch: 200, Loss: 0.0134
+INFO:root:Epoch: 3, Batch: 300, Loss: 0.0126
+INFO:root:Epoch: 3, Batch: 400, Loss: 0.0125
+INFO:root:Epoch: 3, Batch: 500, Loss: 0.0114
+INFO:root:Epoch: 3, Batch: 600, Loss: 0.0142
+INFO:root:Epoch: 3, Batch: 700, Loss: 0.0125
+INFO:root:Validating...
+INFO:root:249/249 = 1.000000
+INFO:root:Beginning Epoch 04
+INFO:root:Epoch: 4, Batch: 100, Loss: 0.0124
+INFO:root:Epoch: 4, Batch: 200, Loss: 0.0118
+INFO:root:Epoch: 4, Batch: 300, Loss: 0.0143
+INFO:root:Epoch: 4, Batch: 400, Loss: 0.0095
+INFO:root:Epoch: 4, Batch: 500, Loss: 0.0097
+INFO:root:Epoch: 4, Batch: 600, Loss: 0.0091
+INFO:root:Epoch: 4, Batch: 700, Loss: 0.0099
+INFO:root:Validating...
+INFO:root:249/249 = 1.000000
+INFO:root:Beginning Epoch 05
+INFO:root:Epoch: 5, Batch: 100, Loss: 0.0080
+INFO:root:Epoch: 5, Batch: 200, Loss: 0.0097
+INFO:root:Epoch: 5, Batch: 300, Loss: 0.0097
+INFO:root:Epoch: 5, Batch: 400, Loss: 0.0096
+INFO:root:Epoch: 5, Batch: 500, Loss: 0.0126
+INFO:root:Epoch: 5, Batch: 600, Loss: 0.0088
+INFO:root:Epoch: 5, Batch: 700, Loss: 0.0087
+INFO:root:Validating...
+INFO:root:249/249 = 1.000000
+INFO:root:Beginning Epoch 06
+INFO:root:Epoch: 6, Batch: 100, Loss: 0.0085
+INFO:root:Epoch: 6, Batch: 200, Loss: 0.0095
+INFO:root:Epoch: 6, Batch: 300, Loss: 0.0084
+

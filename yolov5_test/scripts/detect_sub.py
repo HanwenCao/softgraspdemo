@@ -11,9 +11,9 @@ from PIL import Image as PILImage
 import numpy as np
 
 import sys
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages') # in order to import cv2 under python3
+sys.path.remove('/opt/ros/melodic/lib/python2.7/dist-packages') # in order to import cv2 under python3
 import cv2
-sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
+sys.path.append('/opt/ros/melodic/lib/python2.7/dist-packages')
 
 from pathlib import Path
 import torch
@@ -36,6 +36,7 @@ def detect(save_img=False):
 
     # take a pic !!
     img_arr, depth_arr = realsense.get_image(show=False) #array RGB
+    img_shape = depth_arr.shape
     # print('shape=',depth_arr.shape)  #(480, 640)
     print('central depth=',depth_arr[240,320])  #depth at center in mm      #should it be depth_arr[row,col]?
     x1,y1,x2,y2,depth_avg = 0,0,0,0,0
@@ -119,6 +120,8 @@ def detect(save_img=False):
             pred = apply_classifier(pred, modelc, img, im0s)
 
         # Process detections
+        how_far_to_center = []
+        xyz_objs = []
         for i, det in enumerate(pred):  # detections per image
             if webcam:  # batch_size >= 1
                 p, s, im0 = path[i], '%g: ' % i, im0s[i].copy()
@@ -142,16 +145,19 @@ def detect(save_img=False):
                 for *xyxy, conf, cls in reversed(det):
                     # average depth
                     x1,y1,x2,y2 = xyxy[0].cpu().numpy(),xyxy[1].cpu().numpy(),xyxy[2].cpu().numpy(),xyxy[3].cpu().numpy()
-                    print('x1,y1,x2,y2 = ',x1,y1,x2,y2)
+                    #print('x1,y1,x2,y2 = ',x1,y1,x2,y2)
                     xc,yc = (x1+x2)/2, (y1+y2)/2
+                    dist_to_center = xc-img_shape[0]/2 + yc-img_shape[1]/2  # Manh-distance
+                    how_far_to_center.append(dist_to_center)
                     x1c, x2c, y1c, y2c = (x1+xc)/2,(x2+xc)/2,(y1+yc)/2,(y2+yc)/2
                     depth_4samples = [depth_arr[int(y1c),int(x1c)], depth_arr[int(y1c),int(x2c)],depth_arr[int(y2c),int(x1c)],depth_arr[int(y2c),int(x2c)]]
-                    print('depth_4samples:',depth_4samples)
+                    #print('depth_4samples:',depth_4samples)
                     depth_validsamples = [b for b in depth_4samples if b>0]  
                     depth_avg = np.mean(depth_validsamples)
-                    print('depth for grasping =', depth_avg)
+                    #print('depth for grasping =', depth_avg)
                     xyz_obj = np.dot(np.linalg.inv(K), depth_avg * np.array([xc,yc,1]).transpose())  # estimated object center-XYZ (mm)
                     xyz_obj = xyz_obj.transpose()
+                    xyz_objs.append(xyz_obj)
 
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
@@ -284,7 +290,12 @@ def detect(save_img=False):
             os.system('open ' + save_path)
 
     print('All Done. (%.3fs)' % (time.time() - t0)) #done with all imgs
-    return x1,y1,x2,y2,xyz_obj[0],xyz_obj[1],xyz_obj[2],depth_avg
+
+    # output one det closest to center of image
+    if len(how_far_to_center) != 0:        
+        output_index = np.argmin(how_far_to_center)
+        xyz_obj = xyz_objs[output_index]
+    return 0,0,0,0,xyz_obj[0],xyz_obj[1],xyz_obj[2],depth_avg
 
 
 if __name__ == '__main__':
@@ -305,21 +316,30 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     print(opt)
 
-    with torch.no_grad():
-        if opt.update:  # update all models (to fix SourceChangeWarning)
-            for opt.weights in ['yolov5s.pt', 'yolov5m.pt', 'yolov5l.pt', 'yolov5x.pt']:
-                detect()
-                strip_optimizer(opt.weights)
-        else:
-            '''img_arr = realsense.get_image(show=False)
-            im_pil = PILImage.fromarray(img_arr, 'RGB')
-            im_pil.show()'''
-            yolo_results = detect()
+    #delay = sys.argv[1:]
+    delay = 1
+    # UDP send out of python3.8 env
+    client = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)            
+    ip_port = ('127.0.0.1', 9999)
+
+
+    while True:
+    
+        with torch.no_grad():
+            if opt.update:  # update all models (to fix SourceChangeWarning)
+                for opt.weights in ['yolov5s.pt', 'yolov5m.pt', 'yolov5l.pt', 'yolov5x.pt']:
+                    detect()
+                    strip_optimizer(opt.weights)
+            else:
+                '''img_arr = realsense.get_image(show=False)
+                im_pil = PILImage.fromarray(img_arr, 'RGB')
+                im_pil.show()'''
+                yolo_results = detect()
+                print('yolo_results =', yolo_results[4:7])            
+                client.sendto(pickle.dumps(yolo_results,protocol=2),ip_port) #send                                 
             
-            # UDP send out of python3.8 env
-            client = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)            
-            ip_port = ('127.0.0.1', 9999)
-            client.sendto(pickle.dumps(yolo_results,protocol=2),ip_port) #send             
-            client.close()
+        time.sleep(delay)            
+        
+    client.close()    
 
 

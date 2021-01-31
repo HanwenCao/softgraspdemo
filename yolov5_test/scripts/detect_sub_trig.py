@@ -11,9 +11,9 @@ from PIL import Image as PILImage
 import numpy as np
 
 import sys
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages') # in order to import cv2 under python3
+sys.path.remove('/opt/ros/melodic/lib/python2.7/dist-packages') # in order to import cv2 under python3
 import cv2
-sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
+sys.path.append('/opt/ros/melodic/lib/python2.7/dist-packages')
 
 from pathlib import Path
 import torch
@@ -143,7 +143,7 @@ def detect(save_img=False):
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
                     # average depth
-                    x1,y1,x2,y2 = xyxy[0].cpu().numpy(),xyxy[1].cpu().numpy(),xyxy[2].cpu().numpy(),xyxy[3].cpu().numpy()
+                    x1,y1,x2,y2 = xyxy[0].numpy(),xyxy[1].numpy(),xyxy[2].numpy(),xyxy[3].numpy()
                     print('x1,y1,x2,y2 = ',x1,y1,x2,y2)
                     xc,yc = (x1+x2)/2, (y1+y2)/2
                     x1c, x2c, y1c, y2c = (x1+xc)/2,(x2+xc)/2,(y1+yc)/2,(y2+yc)/2
@@ -235,7 +235,7 @@ def detect(save_img=False):
                     # Write results
                     for *xyxy, conf, cls in reversed(det):
                         # average depth
-                        x1,y1,x2,y2 = xyxy[0].cpu().numpy(),xyxy[1].cpu().numpy(),xyxy[2].cpu().numpy(),xyxy[3].cpu().numpy()
+                        x1,y1,x2,y2 = xyxy[0].numpy(),xyxy[1].numpy(),xyxy[2].numpy(),xyxy[3].numpy()
                         print('x1,y1,x2,y2 = ',x1,y1,x2,y2)
                         xc,yc = (x1+x2)/2, (y1+y2)/2
                         x1c, x2c, y1c, y2c = (x1+xc)/2,(x2+xc)/2,(y1+yc)/2,(y2+yc)/2
@@ -321,9 +321,9 @@ if __name__ == '__main__':
 
             # Then get the current image.
             while True:
-                #img_arr = realsense.get_image(show=False)
-                #im_pil = PILImage.fromarray(img_arr, 'RGB')
-                im_pil = PILImage.open('./comp_diff/images2/1.jpg')
+                img_arr = realsense.get_image(show=False)
+                im_pil = PILImage.fromarray(img_arr, 'RGB')
+                #im_pil = PILImage.open('./comp_diff/images2/1.jpg')
 
                 # Now measure the similarity between background and current scene.
                 hash_c,hash_a = compare_hash(bg1,im_pil)
