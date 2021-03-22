@@ -3,7 +3,7 @@ import glob
 
 from .grasp_data import GraspDatasetBase
 from utils.dataset_processing import grasp, image
-# import cv2
+import cv2
 # import matplotlib.pyplot as plt
 
 
@@ -69,7 +69,16 @@ class CornellDataset(GraspDatasetBase):
         rgb_img.crop((top, left), (min(480, top + self.output_size), min(640, left + self.output_size)))
         rgb_img.zoom(zoom)
         rgb_img.resize((self.output_size, self.output_size))
+
+        # print(rgb_img.img.shape)
+        # cv2.imshow('1',rgb_img.img)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
         if normalise:
             rgb_img.normalise()
             rgb_img.img = rgb_img.img.transpose((2, 0, 1))
+
+            
+
         return rgb_img.img

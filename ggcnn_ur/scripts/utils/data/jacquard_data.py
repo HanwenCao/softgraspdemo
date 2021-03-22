@@ -21,7 +21,8 @@ class JacquardDataset(GraspDatasetBase):
 
         # *_grasps.txt: a text file with the grasps annotations. 
         # Each line in the file is one grasp written as x;y;theta in degrees;opening;jaws size.
-        graspf = glob.glob(os.path.join(file_path, '*', '*_grasps.txt'))
+        #graspf = glob.glob(os.path.join(file_path, '*', '*_grasps.txt'))
+        graspf = glob.glob(os.path.join(file_path, '*','*', '*_grasps.txt'))
         graspf.sort()
         l = len(graspf)
 

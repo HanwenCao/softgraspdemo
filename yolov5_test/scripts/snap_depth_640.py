@@ -82,7 +82,7 @@ def process_depth_image(depth, crop_size, out_size=300, return_mask=False, crop_
         # depth_nan_mask = cv2.resize(depth_nan_mask, (out_size, out_size), cv2.INTER_NEAREST)
         return depth_crop, depth_nan_mask
     else:
-        return depth_crop   
+        return depth_crop
 
 
 def detect(save_img=False):
@@ -97,8 +97,8 @@ def detect(save_img=False):
     img_shape = depth_arr.shape
 
 
-    #crop depth
-    file_name = 'bottle2'
+    #crop depth (no crop)
+    file_name = 'metalstd3'
     
     # depth_arr_crop = depth_arr[int(480/2-150):int(480/2+150),int(640/2-150):int(640/2+150)] 
     depth_arr_crop = depth_arr
@@ -113,9 +113,9 @@ def detect(save_img=False):
     '''
 
     # inpaint by position
-    fack_bg_depth = np.median(depth_arr_crop[358-5:358+5,485-5:485+5])
+    fack_bg_depth = np.median(depth_arr_crop[358-15:358+5,485-15:485+5])
     print('fack_bg_depth',fack_bg_depth)
-    fack_bg_depth = 887.0  # a fixed value to make all depth imgs consistent
+    fack_bg_depth = 1095 #887.0 for box # a fixed value to make all depth imgs consistent
     depth_arr_crop[0:125,:] = fack_bg_depth
     depth_arr_crop[380:480,:] = fack_bg_depth
     depth_arr_crop[:,0:170] = fack_bg_depth

@@ -1,4 +1,4 @@
-mkdir -p catkin_ws/src 
+mkdir -p catkin_ws/src
 cd catkin_ws/src/
 git clone https://github.com/HanwenCao/softgraspdemo.git
 git clone https://github.com/eric-wieser/ros_numpy.git

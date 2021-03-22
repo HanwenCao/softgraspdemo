@@ -38,14 +38,14 @@ def plot_output(rgb_img, depth_img, grasp_q_img, grasp_angle_img, no_grasps=1, g
     ax.axis('off')
 
     ax = fig.add_subplot(2, 3, 3)
-    plot = ax.imshow(grasp_width_img, cmap='hsv', vmin=-5, vmax=150)
-    ax.set_title('width')
+    plot = ax.imshow(grasp_width_img, cmap='hsv', vmin=0, vmax=80)
+    ax.set_title('Width')
     ax.axis('off')
     plt.colorbar(plot)
 
     ax = fig.add_subplot(2, 3, 4)
     plot = ax.imshow(grasp_q_img, cmap='jet', vmin=0, vmax=1)
-    ax.set_title('Q')
+    ax.set_title('Quality')
     ax.axis('off')
     plt.colorbar(plot)
 
@@ -57,8 +57,10 @@ def plot_output(rgb_img, depth_img, grasp_q_img, grasp_angle_img, no_grasps=1, g
 
     ax = fig.add_subplot(2, 3, 6)
     print("range of k_img", np.amin(k_img), np.amax(k_img))
-    plot = ax.imshow(k_img, cmap='jet', vmin=0, vmax=5)
-    ax.set_title('k_img\n'+'max:'+str(np.amax(k_img)))
+    k_img_half = k_img/2.0
+    plot = ax.imshow(k_img_half, cmap='jet', vmin=0, vmax=12)
+    #ax.set_title('k_img\n'+'max:'+str(np.amax(k_img)))
+    ax.set_title('Height')
     ax.axis('off')
     plt.colorbar(plot)
     

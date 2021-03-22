@@ -24,7 +24,11 @@ from ggcnn_ur.msg import Grasp
 
 
 
-MODEL_FILE = './output/k_210124_2139_training_example2k/epoch_02_iou_1.00' #'models/epoch_24_iou_0.82_morezoom'
+MODEL_FILE = './output/models/210223_1208_tryoldDepth/epoch_04_iou_0.89'
+#'./output/bottle_second_210203_1444_training_bottle/epoch_03_iou_1.00' 
+#'./output/k_210124_2139_training_example2k/epoch_02_iou_1.00' 
+#'models/epoch_24_iou_0.82_morezoom'
+
 here = path.dirname(path.abspath(__file__))
 sys.path.append(here)
 print(path.join(path.dirname(__file__), MODEL_FILE))
@@ -121,13 +125,16 @@ def process_depth_image(depth, RGB, crop_size, out_size=300, return_mask=False, 
                            (imw - crop_size) // 2:(imw - crop_size) // 2 + crop_size,
                            (imd - crop_size) // 2:(imd - crop_size) // 2 + crop_size]
 
+    # RGB_crop.normalise()
+    RGB_norm = RGB_crop.astype(np.float32)/255.0
+    RGB_norm -= RGB_norm.mean()
+    RGB_norm = RGB_norm.transpose((2, 0, 1))
+
 
     # inpaint box background
-    RGB_crop[0:42,:,:] = [173,151,125] #  
-    # print(np.amax(depth_crop), np.amin(depth_crop))
-    fake_depth = np.average(depth_crop[60:70,260:280])
-    # print('average depth impaint=',fake_depth)
-    depth_crop[0:42,:] = fake_depth
+    # RGB_crop[0:42,:,:] = [173,151,125] #  
+    # fake_depth = np.average(depth_crop[60:70,260:280])
+    # depth_crop[0:42,:] = fake_depth
 
     # depth_nan_mask = np.isnan(depth_crop).astype(np.uint8)
 
@@ -135,6 +142,8 @@ def process_depth_image(depth, RGB, crop_size, out_size=300, return_mask=False, 
     # OpenCV inpainting does weird things at the border.
     # with TimeIt('2'):
     depth_crop = cv2.copyMakeBorder(depth_crop, 1, 1, 1, 1, cv2.BORDER_DEFAULT)
+    # depth_crop[np.where(depth_crop<=0)] = np.nan #
+    # depth_crop[np.where(depth_crop>1.3)] = np.nan#
     depth_nan_mask = np.isnan(depth_crop).astype(np.uint8)
 
     # with TimeIt('3'):
@@ -160,14 +169,14 @@ def process_depth_image(depth, RGB, crop_size, out_size=300, return_mask=False, 
     # with TimeIt('6'):
         depth_nan_mask = depth_nan_mask[1:-1, 1:-1]
         depth_nan_mask = cv2.resize(depth_nan_mask, (out_size, out_size), cv2.INTER_NEAREST)
-        return depth_crop, depth_nan_mask, RGB_crop
+        return depth_crop, depth_nan_mask, RGB_norm, RGB_crop
     else:
         return depth_crop
 
 
 def predict(depth_arr, RGB, process_depth=True, crop_size=300, out_size=300, depth_nan_mask=None, crop_y_offset=0, filters=(2.0, 1.0, 1.0)):
     if process_depth:
-        depth_crop, depth_nan_mask, RGB_crop = process_depth_image(depth_arr, RGB, crop_size, out_size=out_size, return_mask=True, crop_y_offset=crop_y_offset)
+        depth_crop, depth_nan_mask, RGB_norm, RGB_crop = process_depth_image(depth_arr, RGB, crop_size, out_size=out_size, return_mask=True, crop_y_offset=crop_y_offset)
         
 
     # Inference
@@ -188,7 +197,8 @@ def predict(depth_arr, RGB, process_depth=True, crop_size=300, out_size=300, dep
     width_out = pred_out[3].cpu().numpy().squeeze() * 150.0  # Scaled 0-150:0-1
 
     # Calculate the k map.
-    k_out = pred_out[4].cpu().numpy().squeeze()
+    # k_out = pred_out[4].cpu().numpy().squeeze()
+    k_out = points_out
 
     # Filter the outputs.
     if filters[0]:
@@ -305,7 +315,10 @@ def ggcnn_predict():
 
     # time.sleep(0.1)
     with torch.no_grad():
-        g = predict(depth_arr, img_arr, process_depth=True, crop_size=300, out_size=300, depth_nan_mask=None, crop_y_offset=0, filters=(2.0, 1.0, 1.0))           
+        time_s = time.time()
+        g = predict(depth_arr, img_arr, process_depth=True, crop_size=300, out_size=300, depth_nan_mask=None, crop_y_offset=0, filters=(2.0, 1.0, 1.0))     
+        time_e = time.time()      
+        print('runtime =', time_e-time_s) 
 
     return g
 
@@ -315,10 +328,10 @@ def ggcnn_predict():
 
 if __name__ == '__main__':
     while True:
-        time_s = time.time()
+        
         grasp = ggcnn_predict()
-        time_e = time.time()
-        print('runtime =', time_e-time_s) #roughly 15Hz from taking img to outputing a grasp
+        
+        
 
         # UDP send out of python3 env
         client = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)            

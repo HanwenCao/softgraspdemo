@@ -1,10 +1,11 @@
 source ~/virtual_env/pytorch_env/bin/activate
 
+*********
 python train_ggcnn.py --description training_example2 --network ggcnn2 --dataset cornell --dataset-path ./dataset/mydataset640filters/ --batches-per-epoch 800
 
 python eval_ggcnn.py --network ./output/models/210104_2011_training_example2/epoch_13_iou_0.78 --n-grasps 1 --dataset my_crop --dataset-path ./mydataset640filterstest --iou-eval --vis --split 0
 
-
+*********
 k-rgbd:
 python train_ggcnn_k.py --description training_example2k --network ggcnn2_k --dataset cornell_k --dataset-path ./dataset/more_k/ --batches-per-epoch 800 --use-rgb 1
 
@@ -14,4 +15,35 @@ python eval_ggcnn_k.py --network ./output/k_rgbd_210131_1951_training_example2k/
 k-depth:
 python eval_ggcnn_k.py --network ./output/k_210124_2139_training_example2k/epoch_02_iou_1.00 --n-grasps 1 --dataset cornell_k --dataset-path ./dataset/more_k/ --iou-eval --vis --split 0
 
+
+*****
+train jacquard 0-11:
+(the jacquard dataloader has been modified in line 25)
+python train_ggcnn.py --description training_example2 --network ggcnn2 --dataset jacquard --dataset-path /mnt/F/Jacquard/Jacquardall --batches-per-epoch 1000 --use-rgb 1
+
+eval jacquard weights:
+python eval_ggcnn.py --network ./output/jacquard_rgbd_210202_2110_training_example2/epoch_01_iou_0.84 --n-grasps 1 --dataset cornell --dataset-path ./dataset/bottle/ --iou-eval --vis --split 0 --use-rgb 1
+
+*********
+train bottle dataset:
+python train_ggcnn.py --description training_bottle --network ggcnn2 --dataset cornell --dataset-path ./dataset/new_transp/ --batches-per-epoch 500 --use-rgb 1
+
+test bottle:
+python eval_ggcnn.py --network ./output/bottle_second_210203_1444_training_bottle/epoch_03_iou_1.00 --n-grasps 1 --dataset cornell --dataset-path ./dataset/new_transp/ --iou-eval --vis --split 0 --use-rgb 1
+
+
+********** 
+train all spec+food+transp output depth:
+python train_ggcnn_k.py --description all_k --network ggcnn2_k --dataset cornell_k --dataset-path ./dataset/spec_transp_d/ --batches-per-epoch 500 --use-rgb 1
+
+python eval_ggcnn_k.py --network ./output/models/210210_1124_height/epoch_07_iou_1.00 --n-grasps 1 --dataset cornell_k --dataset-path ./dataset/spec_transp_2hgt_clean/ --iou-eval --vis --split 0 --use-rgb 1
+
+************** 新DOConv
+python train_ggcnn_k.py --description newnet --network ggcnn2_k_plus --dataset cornell_k --dataset-path ./dataset/testall0216_block_loushangstd/ --batches-per-epoch 500 --use-rgb 1 --batch-size 32
+
+python eval_ggcnn_k.py --network ./output/models/210216_1343_newyear/epoch_10_iou_0.86 --n-grasps 1 --dataset cornell_k --dataset-path ./dataset/testall0216/ --iou-eval --vis --split 0 --use-rgb 1
+python eval_ggcnn_k.py --network ./output/models/210218_1726_newnet/epoch_09_iou_0.88 --n-grasps 1 --dataset cornell_k --dataset-path ./dataset/testall0216_block_loushangstd/ --iou-eval --vis --split 0 --use-rgb 1
+
+************** 新DOConv+filtersize(to do)
+python train_ggcnn_k.py --description newnet2 --network ggcnn2_k_plus_pro --dataset cornell_k --dataset-path ./dataset/testall0218_nophone/ --batches-per-epoch 300 --use-rgb 1 --batch-size 32
 

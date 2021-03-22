@@ -73,7 +73,7 @@ class PythonSerialDriver():
         self.base = 0x16
 
         self.counter = 10   # loopTest       
-        self.printLog = True   
+        self.printLog = False #True   
 
     def send(self, data):
         self.commands = data

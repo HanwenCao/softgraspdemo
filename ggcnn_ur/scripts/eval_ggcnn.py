@@ -94,7 +94,7 @@ if __name__ == '__main__':
             logging.info('Processing {}/{}'.format(idx+1, len(test_data)))
             xc = x.to(device) #data
             yc = [yi.to(device) for yi in y] #label
-            # print('shape of xc:',xc.shape)
+            print('shape of xc:',xc.shape)
             
             # Approach 1 --models/ggcnn.py 
             lossd = net.compute_loss(xc, yc)  # x(data), y(label) 

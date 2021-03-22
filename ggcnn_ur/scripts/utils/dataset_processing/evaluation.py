@@ -48,7 +48,7 @@ def plot_output(rgb_img, depth_img, grasp_q_img, grasp_angle_img, no_grasps=1, g
     ax.set_title('Angle')
     ax.axis('off')
     plt.colorbar(plot)
-    #plt.show()
+    plt.show()
     
     os.makedirs('./results_vis', exist_ok=True)
     save_name = './results_vis/results_'+id_generator()+'.png'

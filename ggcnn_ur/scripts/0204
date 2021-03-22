@@ -1,0 +1,48 @@
+1. metal RGBD 单独训练不能收敛，其他几个单独训练都基本可以取得较高分数
+2 去除metal后的数据训练，BETTER，可以达到60%+但是不稳定。eval：小瓶躺着每次都infer不出
+3 RGBD VS RGB-only 还需要进一步试验
+4 去除metal and 小瓶躺着 后的数据训练: bottlestd+glassnolabel RGBD can be trained.
+
+next
+检查每个图depth range
+小瓶子重新label
+考虑背景固定的RGBD/RGB训练，可能是背景的问题
+多种不收敛是否是包含某些数据不好，还是随便组合起来多种物体都难收敛，尝试不同的组合。已经尝试过BOTTLE-BOTTLESTD-GLASS
+
+
+
+
+
+
+
+**** create new dataset ****
+clean: everything placed on a static table
+unique: same labelling strategy
+
+training on bottle,bottlestd,glass,glassstd,metal (RGBD):
+  35%, but vis result is ok, and loss can drop smoothly during training
+training with Depth only --> 0%, cannot converge! [make sense]
+training with RGB only --> 20% low score but ok vis results. 釘子檢測不出
+
+
+Other doubts:
+1 Though transp, still has depth image
+2 stand bottle case: where to label? different view angle have different view, e.g., 垂直向下看只能看到瓶子最上顶面，稍微倾斜会看到瓶子侧身。应该标注那里？check cornell!
+
+	rgbd		rgb	depth
+bao	1
+block	1
+hex	0.4(*)
+nail	0.5-0.7(**)
+pen	0.78-1.0(**)
+phone	0.79-1.0
+tube	1.0
+all	0.9
+
+* Note that although training IOU score is low for small hex, but Q map and angle map can be predicted well. Also, during trainnig, loss can drop as it should be. The reason that cause low scores may be inapproapriate labelling. My guess is that I should label a wider/bigger bbox, or just ignore the low score since predicting the correct Q map is most important.
+
+** Similar issue as *: normal loss but low IOU score. That happens on thin and long objs.
+
+
+			RGBD	Note
+specular+transp+food		0.8	loss曲折下降

@@ -24,8 +24,7 @@ import copy as copy_module
 from utils.slerp import slerp
 from utils.transformations import euler_from_quaternion
 from utils.python_serial_driver import PythonSerialDriver
-#psd = PythonSerialDriver()
-#psd.loopTestRTFRetry(False, False)
+
 
 
 def list_to_quaternion(l):
@@ -51,7 +50,7 @@ class MoveGroupInteface(object):
         moveit_commander.roscpp_initialize(sys.argv)
         rospy.init_node('ur_move_test_node', anonymous=True)
         self.robot = moveit_commander.RobotCommander()
-        self.scene = moveit_commander.PlanningSceneInterface()  # Not used in this tutorial
+        #self.scene = moveit_commander.PlanningSceneInterface()  # Not used in this tutorial
         group_name = "manipulator"  # group_name can be find in ur5_moveit_config/config/ur5.srdf
         self.move_group_commander = moveit_commander.MoveGroupCommander(group_name)
         self.display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path',moveit_msgs.msg.DisplayTrajectory,queue_size=20)
@@ -74,28 +73,30 @@ class MoveGroupInteface(object):
         # self.move_group_commander.set_max_velocity_scaling_factor(0.3)
         self.move_group_commander.set_max_acceleration_scaling_factor(1)
         self.move_group_commander.set_max_velocity_scaling_factor(1)
-        #self.move_group_commander.set_named_target('home')
 
         print "============ Go home ============ "
         home = [1.9197, -1.5707, 1.5707, -1.5707, -1.5707, 0]
         self.move_group_commander.go(home, wait=True)  #go to home
         time.sleep(0.5)
         pose_init = self.move_group_commander.get_current_pose()
-        print "current euler: ", euler_from_quaternion(quaternion_to_list( pose_init.pose.orientation ))
+        # print "current euler: ", euler_from_quaternion(quaternion_to_list( pose_init.pose.orientation ))
 
         ################ fruit pnp paras ######################
         self.cam_res = []
         self.last_cam_res = []        
         self.txyz = []
-        self.pxyz = []        
+        self.pxyz = []
         self.is_gripper_open = False
         self.grasp_new = Grasp() # to listen to the latest Grasp() msg
+        self.table = 1050.0 # const table depth in cam frame
+        self.tall = False
+        self.primitive_offset = 0.0
 
     def plan_cartesian_path(self, txyz):
         waypoints = []
         wpose = self.move_group_commander.get_current_pose().pose #!!
-        print "Current pose: ", wpose
-        print "Goal pose: ", txyz
+        # print "Current pose: ", wpose
+        # print "Goal pose: ", txyz
 
         cnt =  100
         # interpolate quaternion
@@ -170,6 +171,7 @@ class MoveGroupInteface(object):
         return numpy.dot(self.RotZ(RPY[2]), numpy.dot(self.RotY(RPY[1]), self.RotX(RPY[0])))
 
     def position_from_camera_to_robot(self, x, y, z):
+        # print "target in camera frame(x,y,z): ", x,y,z
         R0 = numpy.array([[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
         #R1 = self.RPY2Mat(numpy.array([1, 10, -50]) * pi / 180.0)
         #R1 = self.RPY2Mat(numpy.array([6, 18, -50]) * pi / 180.0)        #robot to the rightmost
@@ -186,7 +188,7 @@ class MoveGroupInteface(object):
         cTb[0:3, 0:3] = cRb
         cTb[0:3, 3] = cPb
         bTc = numpy.linalg.pinv(cTb)
-        print('bTc', bTc)
+        # print('bTc', bTc)
         cPo = numpy.array([x, y, z, 1])
         bPo = numpy.dot(bTc, cPo)        
         return [-bPo[0], -bPo[1], bPo[2]]
@@ -234,11 +236,25 @@ class MoveGroupInteface(object):
         if grasp.quality > 0.0:
             self.grasp_new = copy_module.deepcopy(grasp) # if no update, keep the old data
             # update cam_res
-            # cam_res = [orientation.x, orientation.y, orientation.z, orientation.w, position.x, position.y, position.z, object class(always the last one)]
+            # cam_res = [orientation.x, orientation.y, orientation.z, orientation.w, 
+                         #position.x, position.y, position.z, object class(always the last one)]
+
+            # self.grasp_new.pose.position.z = self.table  #1050.0 # table depth in cam frame
+            if self.grasp_new.k / 2.0 > 6.0:  # if obj's height>8cm
+                print "[INFO] Tall object detected."
+                self.tall = True
+                self.primitive_offset = 0.0
+            #     self.grasp_new.pose.position.z -= self.grasp_new.k/2.0 - 8.0 ##!!
+            #     print "set z=" , self.grasp_new.pose.position.z
+            else:
+                print "Flat object."
+                self.tall = False
+                self.primitive_offset = 0.0
+
             self.cam_res = [self.grasp_new.pose.orientation.x, self.grasp_new.pose.orientation.y, self.grasp_new.pose.orientation.z, self.grasp_new.pose.orientation.w, 
                             self.grasp_new.pose.position.x, self.grasp_new.pose.position.y, self.grasp_new.pose.position.z, 
                             3]
-            print "test euler: ", euler_from_quaternion(quaternion_to_list( self.grasp_new.pose.orientation )) #/??why not same as what I send??
+            #print "receive:",
         else:
             self.cam_res = [0]
 
@@ -250,11 +266,12 @@ class MoveGroupInteface(object):
 
 
 
-
+psd = PythonSerialDriver()
+#psd.loopTestRTFRetry(False, False)
 print "----------------------------------------------------------"
 print "Welcome to the MoveIt MoveGroup Python Interface Tutorial"
 print "----------------------------------------------------------"
-print "============ Press `Enter` to plan and display a Cartesian path ..."
+print "============ Please Press `Enter` to plan and display a Cartesian path ..."
 raw_input()
 tutorial = MoveGroupInteface()
 rate = rospy.Rate(10)
@@ -262,19 +279,19 @@ rate = rospy.Rate(10)
 ################ fruit pnp config ######################
 index = 0
 #start posn UR joint_angle_0-5: 123,-90,90,-90,-90,0
-#z_ready = 0.4
 
-gripper_id = 1  # e.g. 0 -- 4fingers  (input arg)
-grippers = ['4fingers','3fingers','2fingers']
-offset_grippers = [0.025, 0, 0]  # offset of z_pick for each gripper
+
+gripper_id = 3  # e.g. 0 -- 4fingers  (input arg)
+grippers = ['4fingers','3fingers','2fingers','iros_2fingers']
+offset_grippers = [0.025, 0, 0, 0.025]  # offset of z_pick for each gripper
 offset_gripper = offset_grippers[gripper_id]
 
-z_ready = 0.4316+0.1 # above object (prepick)
+z_ready = 0.4316 # 0.4316+0.2 # above object (prepick) +0.2(box's height)
 orientation_default = [-0.5792, 0.4057, 0.5791, 0.4055] # pose.orientation of home, x,y,z,w
 pick_idle = [0.10956455409982657, 0.4849471563129701, z_ready, 
             orientation_default[0],orientation_default[1],orientation_default[2],orientation_default[3]]  # mid stop between home and prepick
 frontmost_xyz = [0.5647463207342078, 0.36478811826345703, 0.25877492322608786]
-min_pcik_z = frontmost_xyz[2] - 0.002
+min_pick_z = frontmost_xyz[2] - 0.002
 #place location [0:3]
 #class  ['moon cake', 'mango', 'durian', 'pineapple', 'apple', 'pear', 'orange', 'lemon']
 # above conveyor
@@ -304,8 +321,8 @@ tutorial.txyz = [pick_idle,
                 [x_place, y_place, z_place, orientation_default[0],orientation_default[1],orientation_default[2],orientation_default[3]], 
                 [x_place, y_place, z_ready, orientation_default[0],orientation_default[1],orientation_default[2],orientation_default[3]]]
 
-#psd.moveTo(psd.FLG_ZERO, 0, None, False)
-#psd.moveTo(psd.FLG_NEG, 50, None, False)
+psd.moveTo(psd.FLG_ZERO, 0, None, False)
+psd.moveTo(psd.FLG_NEG, 50, None, False)
 
 
 while not rospy.is_shutdown():        
@@ -333,8 +350,7 @@ while not rospy.is_shutdown():
                     print ("============  Pre Pick, Last Cam Res No Data, Retry ...")                
                     tutorial.last_cam_res = tutorial.cam_res
                     rospy.sleep(0.5)
-                    continue   
-  
+                    continue  
                 #assuming conveyor always running
                 #acc to vision algo, we always recv the xyz close to snr
                 #AND snr has pre-configed within ur working range
@@ -344,12 +360,25 @@ while not rospy.is_shutdown():
 
                 x_pick = t[0]
                 y_pick = t[1]
-                if t[2] < min_pcik_z + offset_gripper:
-                    z_pick = min_pcik_z + offset_gripper
-                    print ("=!=!=!=!=!=!=  Pre Pick, Pick Z Too Small, Reset to Minimum ...")                    
-                else:
-                    z_pick = t[2] + offset_gripper              
-                                      
+                # if t[2] < min_pick_z + offset_gripper:
+                    # z_pick = min_pick_z + offset_gripper
+                    # print ("=!=!=   Pre Pick, Pick Z Too Small, Reset to Minimum ... ", t[2], " < ", min_pick_z + offset_gripper)
+                # else:
+                    # z_pick = t[2] + offset_gripper
+
+                # z_pick = t[2] + offset_gripper  # use camera's detected depth in robot frame
+                # print("!!!!!",z_pick) #0.2924
+                detect_depth = t[2] + offset_gripper
+                predict_height = tutorial.grasp_new.k/2.0/100.0 #divided by 100 because k is in cm
+
+                if not tutorial.tall: #!!!
+                    print "Flat"
+                    z_pick = min_pick_z + offset_gripper   #grasp to table(fixed grasping z in robot frame)  
+                if tutorial.tall:
+                    print "Tall"
+                    print "Choose from ",detect_depth, " and ", 0.28+predict_height #!!!
+                    z_pick = max(detect_depth, 0.2924+predict_height)-0.04
+
                 # tutorial.txyz = [pick_idle, [x_pick, y_pick, z_ready], [x_pick, y_pick, z_pick], [x_pick, y_pick, z_ready], pick_idle, [x_place, y_place, z_ready], [x_place, y_place, z_place], [x_place, y_place, z_ready]]
                 tutorial.txyz = [pick_idle, 
                 [x_pick, y_pick, z_ready, tutorial.cam_res[0],tutorial.cam_res[1],tutorial.cam_res[2],tutorial.cam_res[3]], 
@@ -410,20 +439,20 @@ while not rospy.is_shutdown():
                 [x_place, y_place, z_place, orientation_default[0],orientation_default[1],orientation_default[2],orientation_default[3]], 
                 [x_place, y_place, z_ready, orientation_default[0],orientation_default[1],orientation_default[2],orientation_default[3]]]
 
-    print('current index:',index)
+    # print('current index:',index)
     cartesian_plan, fraction = tutorial.plan_cartesian_path(tutorial.txyz[index])
     tutorial.execute_plan(cartesian_plan)
 
     ################ gripper part ######################
     if index == 2:
-    	print('')
-        #psd.moveTo(psd.FLG_ZERO, 0)
-        #psd.moveTo(psd.FLG_POS, 70, None, False) 
+    	# print('')
+        psd.moveTo(psd.FLG_ZERO, 0)
+        psd.moveTo(psd.FLG_POS, 90, None, False) 
         
     elif index == 6:
         if tutorial.is_gripper_open == False:
-            #psd.moveTo(psd.FLG_ZERO, 0)
-            #psd.moveTo(psd.FLG_NEG, 50, None, False)         
+            psd.moveTo(psd.FLG_ZERO, 0)
+            psd.moveTo(psd.FLG_NEG, 50, None, False)         
             tutorial.is_gripper_open = True
         tutorial.get_data()
         if len(tutorial.cam_res) > 1:           
